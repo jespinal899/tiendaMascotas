@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PawShop · Tienda de Mascotas</title>
+<style>
+  :root{
+    --primary:#ff7a45;
+    --primary-dark:#e8632f;
+    --secondary:#2d6a4f;
+    --bg:#faf7f2;
+    --card:#ffffff;
+    --text:#25302e;
+    --muted:#6b7573;
+    --border:#e7e1d8;
+    --success:#2d6a4f;
+    --danger:#d64545;
+    --radius:14px;
+    --shadow:0 4px 14px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);}
+  a{color:inherit;}
+  header{
+    background:linear-gradient(120deg,var(--primary),var(--primary-dark));
+    color:#fff;position:sticky;top:0;z-index:50;box-shadow:var(--shadow);
+  }
+  .nav{
+    max-width:1200px;margin:0 auto;display:flex;align-items:center;
+    justify-content:space-between;padding:14px 24px;gap:16px;
+  }
+  .logo{font-size:1.5rem;font-weight:800;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .search{
+    flex:1;max-width:420px;display:flex;background:#fff;border-radius:999px;overflow:hidden;
+  }
+  .search input{flex:1;border:none;padding:10px 16px;font-size:.95rem;outline:none;}
+  .search button{border:none;background:var(--secondary);color:#fff;padding:0 18px;cursor:pointer;font-weight:600;}
+  .nav-actions{display:flex;align-items:center;gap:16px;}
+  .cart-btn{
+    position:relative;background:rgba(255,255,255,.18);border:none;color:#fff;
+    padding:10px 16px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.95rem;
+    display:flex;align-items:center;gap:6px;transition:.2s;
+  }
+  .cart-btn:hover{background:rgba(255,255,255,.3);}
+  .badge{
+    position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;
+    font-size:.7rem;padding:2px 6px;border-radius:999px;min-width:18px;text-align:center;font-weight:700;
+  }
+  .hero{
+    max-width:1200px;margin:0 auto;padding:36px 24px 8px;
+  }
+  .hero-banner{
+    background:linear-gradient(120deg,#ffe8d6,#fff3e0);border-radius:var(--radius);
+    padding:32px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  }
+  .hero-text h1{margin:0 0 8px;font-size:1.8rem;color:var(--secondary);}
+  .hero-text p{margin:0;color:var(--muted);max-width:480px;}
+  .hero-emoji{font-size:4rem;}
+  .categories{
+    max-width:1200px;margin:0 auto;padding:20px 24px 0;display:flex;gap:10px;flex-wrap:wrap;
+  }
+  .chip{
+    background:var(--card);border:1px solid var(--border);padding:8px 16px;border-radius:999px;
+    cursor:pointer;font-size:.9rem;font-weight:600;color:var(--text);transition:.15s;
+  }
+  .chip:hover{border-color:var(--primary);}
+  .chip.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+  main{max-width:1200px;margin:0 auto;padding:24px;}
+  .section-title{font-size:1.3rem;margin:20px 0 16px;color:var(--secondary);}
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:20px;
+  }
+  .product-card{
+    background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    overflow:hidden;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s;
+  }
+  .product-card:hover{transform:translateY(-4px);box-shadow:0 10px 24px rgba(0,0,0,.1);}
+  .product-img{
+    height:150px;display:flex;align-items:center;justify-content:center;font-size:4rem;
+    background:linear-gradient(135deg,#fff3e0,#ffe8d6);
+  }
+  .product-body{padding:14px 16px 16px;display:flex;flex-direction:column;flex:1;}
+  .product-tag{
+    font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--primary-dark);font-weight:700;margin-bottom:4px;
+  }
+  .product-name{font-weight:700;font-size:1rem;margin:0 0 6px;}
+  .product-desc{font-size:.85rem;color:var(--muted);margin:0 0 12px;flex:1;line-height:1.4;}
+  .stars{color:#f5a623;font-size:.85rem;margin-bottom:8px;}
+  .price-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .price{font-size:1.15rem;font-weight:800;color:var(--secondary);}
+  .old-price{font-size:.8rem;color:var(--muted);text-decoration:line-through;margin-left:6px;}
+  .add-btn{
+    background:var(--primary);color:#fff;border:none;padding:10px;border-radius:10px;
+    font-weight:700;cursor:pointer;transition:.15s;font-size:.9rem;
+  }
+  .add-btn:hover{background:var(--primary-dark);}
+  .add-btn.added{background:var(--success);}
+  .stock-low{color:var(--danger);font-size:.75rem;font-weight:600;margin-bottom:6px;}
+
+  /* Drawer / Cart */
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;
+  }
+  .overlay.show{display:block;}
+  .drawer{
+    position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:#fff;z-index:101;
+    box-shadow:-8px 0 24px rgba(0,0,0,.15);transform:translateX(100%);transition:transform .25s ease;
+    display:flex;flex-direction:column;
+  }
+  .drawer.show{transform:translateX(0);}
+  .drawer-header{
+    padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;
+  }
+  .drawer-header h2{margin:0;font-size:1.2rem;}
+  .close-btn{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);}
+  .drawer-body{flex:1;overflow-y:auto;padding:16px 20px;}
+  .cart-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+  .cart-item-img{font-size:2rem;width:52px;height:52px;background:var(--bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .cart-item-info{flex:1;}
+  .cart-item-name{font-weight:700;font-size:.9rem;margin:0 0 4px;}
+  .cart-item-price{color:var(--secondary);font-weight:700;font-size:.85rem;}
+  .qty-controls{display:flex;align-items:center;gap:8px;margin-top:6px;}
+  .qty-controls button{
+    width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;font-weight:700;
+  }
+  .remove-link{background:none;border:none;color:var(--danger);font-size:.75rem;cursor:pointer;margin-top:6px;padding:0;text-decoration:underline;}
+  .empty-cart{text-align:center;color:var(--muted);padding:60px 20px;}
+  .empty-cart .em{font-size:3rem;display:block;margin-bottom:10px;}
+  .drawer-footer{padding:16px 20px;border-top:1px solid var(--border);background:#fcfaf7;}
+  .summary-row{display:flex;justify-content:space-between;font-size:.9rem;margin-bottom:6px;color:var(--muted);}
+  .summary-row.total{font-size:1.15rem;font-weight:800;color:var(--text);margin-top:8px;}
+  .checkout-btn{
+    width:100%;background:var(--secondary);color:#fff;border:none;padding:14px;border-radius:10px;
+    font-weight:700;font-size:1rem;cursor:pointer;margin-top:12px;transition:.15s;
+  }
+  .checkout-btn:hover{background:#1f4f39;}
+  .checkout-btn:disabled{background:#c8c8c8;cursor:not-allowed;}
+
+  /* Modal checkout */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;
+    align-items:center;justify-content:center;padding:16px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:#fff;border-radius:var(--radius);max-width:560px;width:100%;max-height:90vh;overflow-y:auto;
+    box-shadow:0 20px 50px rgba(0,0,0,.25);
+  }
+  .modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .modal-header h2{margin:0;font-size:1.25rem;}
+  .modal-body{padding:24px;}
+  .steps{display:flex;justify-content:space-between;margin-bottom:24px;position:relative;}
+  .steps::before{content:'';position:absolute;top:14px;left:0;right:0;height:2px;background:var(--border);z-index:0;}
+  .step{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:1;flex:1;}
+  .step-circle{
+    width:28px;height:28px;border-radius:50%;background:var(--border);color:#fff;display:flex;
+    align-items:center;justify-content:center;font-weight:700;font-size:.85rem;transition:.2s;
+  }
+  .step.active .step-circle{background:var(--primary);}
+  .step.done .step-circle{background:var(--success);}
+  .step-label{font-size:.72rem;color:var(--muted);font-weight:600;text-align:center;}
+  .step.active .step-label{color:var(--text);}
+  .form-group{margin-bottom:14px;}
+  .form-group label{display:block;font-size:.85rem;font-weight:600;margin-bottom:5px;}
+  .form-group input,.form-group select{
+    width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;outline:none;
+    transition:.15s;
+  }
+  .form-group input:focus,.form-group select:focus{border-color:var(--primary);}
+  .form-row{display:flex;gap:12px;}
+  .form-row .form-group{flex:1;}
+  .error-text{color:var(--danger);font-size:.75rem;margin-top:4px;display:none;}
+  .form-group.error input{border-color:var(--danger);}
+  .form-group.error .error-text{display:block;}
+  .pay-methods{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+  .pay-method{
+    flex:1;min-width:110px;border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;
+    cursor:pointer;transition:.15s;font-size:.85rem;font-weight:600;
+  }
+  .pay-method:hover{border-color:var(--primary);}
+  .pay-method.selected{border-color:var(--primary);background:#fff3e0;}
+  .pay-method .pm-icon{font-size:1.5rem;display:block;margin-bottom:4px;}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;}
+  .btn{
+    padding:12px 20px;border-radius:10px;border:none;font-weight:700;cursor:pointer;font-size:.9rem;transition:.15s;
+  }
+  .btn-primary{background:var(--primary);color:#fff;flex:1;}
+  .btn-primary:hover{background:var(--primary-dark);}
+  .btn-secondary{background:#f1efe9;color:var(--text);}
+  .btn-secondary:hover{background:#e5e1d7;}
+  .order-review-item{display:flex;justify-content:space-between;font-size:.85rem;padding:6px 0;border-bottom:1px dashed var(--border);}
+  .success-view{text-align:center;padding:20px 0;}
+  .success-icon{
+    width:70px;height:70px;background:var(--success);color:#fff;border-radius:50%;display:flex;
+    align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 16px;
+  }
+  .order-num{background:var(--bg);border-radius:10px;padding:12px;font-weight:700;margin:16px 0;color:var(--secondary);}
+  .spinner{
+    width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;
+    animation:spin 1s linear infinite;margin:20px auto;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--secondary);color:#fff;padding:12px 22px;border-radius:999px;font-weight:600;
+    font-size:.9rem;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.3s;z-index:300;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  footer{
+    background:var(--secondary);color:#fff;padding:30px 24px;margin-top:40px;text-align:center;font-size:.85rem;
+  }
+  .card-icons{display:flex;gap:6px;margin-top:6px;font-size:1.3rem;}
+  @media(max-width:640px){
+    .search{display:none;}
+    .hero-emoji{display:none;}
+    .drawer{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="logo">🐾 PawShop</div>
+    <div class="search">
+      <input type="text" id="searchInput" placeholder="Buscar alimento, juguetes, accesorios...">
+      <button onclick="applySearch()">Buscar</button>
+    </div>
+    <div class="nav-actions">
+      <button class="cart-btn" onclick="openCart()">
+        🛒 Carrito
+        <span class="badge" id="cartBadge">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-banner">
+    <div class="hero-text">
+      <h1>Todo para tu compañero peludo 🐶🐱</h1>
+      <p>Envío en 24-48h, precios justos y productos seleccionados por veterinarios. Compra fácil, rápida y segura.</p>
+    </div>
+    <div class="hero-emoji">🐕🦴🐈</div>
+  </div>
+</div>
+
+<div class="categories" id="categoryBar"></div>
+
+<main>
+  <h2 class="section-title" id="resultsTitle">Todos los productos</h2>
+  <div class="grid" id="productGrid"></div>
+</main>
+
+<footer>
+  <p>© 2026 PawShop · Tienda de mascotas (prototipo demo) · Pagos simulados, no se procesan transacciones reales.</p>
+</footer>
+
+<!-- Cart Drawer -->
+<div class="overlay" id="overlay" onclick="closeCart()"></div>
+<div class="drawer" id="cartDrawer">
+  <div class="drawer-header">
+    <h2>Tu carrito</h2>
+    <button class="close-btn" onclick="closeCart()">✕</button>
+  </div>
+  <div class="drawer-body" id="cartBody"></div>
+  <div class="drawer-footer" id="cartFooter"></div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal-overlay" id="checkoutOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Finalizar compra</h2>
+      <button class="close-btn" onclick="closeCheckout()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Datos del catálogo ---------- */
+const products = [
+  {id:1, name:"Croquetas Premium Adulto 15kg", cat:"Alimento", pet:"Perro", emoji:"🍖", price:42.99, oldPrice:49.99, desc:"Alimento balanceado con proteína real de pollo, omega 3 y 6 para un pelaje brillante.", rating:4.8, stock:12},
+  {id:2, name:"Alimento Gato Salmón 7.5kg", cat:"Alimento", pet:"Gato", emoji:"🐟", price:34.5, desc:"Fórmula sin granos, rica en salmón, ideal para gatos sensibles y control de bolas de pelo.", rating:4.6, stock:20},
+  {id:3, name:"Snacks Dentales Perro x20", cat:"Snacks", pet:"Perro", emoji:"🦴", price:9.99, desc:"Reduce el sarro y refresca el aliento mientras tu perro se divierte masticando.", rating:4.4, stock:35},
+  {id:4, name:"Arena Sanitaria Aglomerante 10kg", cat:"Higiene", pet:"Gato", emoji:"🧹", price:15.75, desc:"Control de olores 7 días, aglomeración rápida y baja generación de polvo.", rating:4.7, stock:4},
+  {id:5, name:"Rascador Torre para Gatos", cat:"Accesorios", pet:"Gato", emoji:"🐈", price:59.9, oldPrice:74.9, desc:"Torre de 3 niveles con casita, cuerda de sisal y bola colgante para jugar.", rating:4.9, stock:6},
+  {id:6, name:"Correa Retráctil 5m", cat:"Accesorios", pet:"Perro", emoji:"🦮", price:18.25, desc:"Sistema de frenado automático, mango ergonómico antideslizante.", rating:4.3, stock:18},
+  {id:7, name:"Pecera Kit Completo 40L", cat:"Acuario", pet:"Pez", emoji:"🐠", price:89.0, desc:"Incluye filtro, luz LED y calefactor. Perfecta para iniciarse en la acuariofilia.", rating:4.5, stock:3},
+  {id:8, name:"Jaula Aviario para Aves", cat:"Accesorios", pet:"Ave", emoji:"🦜", price:64.5, desc:"Amplio espacio con comederos incluidos y bandeja extraíble para fácil limpieza.", rating:4.2, stock:9},
+  {id:9, name:"Shampoo Hipoalergénico 500ml", cat:"Higiene", pet:"Perro", emoji:"🧴", price:11.4, desc:"Fórmula suave con avena, ideal para pieles sensibles y alergias.", rating:4.6, stock:25},
+  {id:10, name:"Pelota Interactiva con Sonido", cat:"Juguetes", pet:"Perro", emoji:"🎾", price:7.5, desc:"Estimula el instinto de juego, resistente a mordidas fuertes.", rating:4.5, stock:40},
+  {id:11, name:"Ratón de Juguete con Catnip", cat:"Juguetes", pet:"Gato", emoji:"🐭", price:4.99, desc:"Relleno de catnip 100% natural para horas de diversión felina.", rating:4.4, stock:50},
+  {id:12, name:"Transportadora de Viaje M", cat:"Accesorios", pet:"Gato", emoji:"🧳", price:29.99, desc:"Ventilación óptima, puerta segura y asa acolchada para mayor comodidad.", rating:4.7, stock:8},
+  {id:13, name:"Vitaminas Multiuso para Perros", cat:"Salud", pet:"Perro", emoji:"💊", price:16.8, desc:"Refuerza el sistema inmune, articulaciones y piel con Omega 3, 6 y biotina.", rating:4.5, stock:15},
+  {id:14, name:"Comedero Automático Wifi", cat:"Accesorios", pet:"Gato", emoji:"📱", price:75.0, oldPrice:95.0, desc:"Programa horarios de alimentación desde tu celular, ideal para dueños ocupados.", rating:4.8, stock:5},
+  {id:15, name:"Cama Ortopédica XL", cat:"Accesorios", pet:"Perro", emoji:"🛏️", price:54.99, desc:"Espuma viscoelástica que alivia articulaciones, funda lavable.", rating:4.9, stock:7},
+  {id:16, name:"Alimento para Aves Mix Semillas 2kg", cat:"Alimento", pet:"Ave", emoji:"🌾", price:8.25, desc:"Mezcla nutritiva de semillas variadas para canarios y periquitos.", rating:4.3, stock:22},
+];
+
+let cart = [];
+let selectedCategory = "Todos";
+let searchTerm = "";
+let checkoutStep = 1;
+let selectedPayment = null;
+let orderData = {};
+
+/* ---------- Render categorías ---------- */
+function renderCategories(){
+  const cats = ["Todos", ...new Set(products.map(p=>p.cat))];
+  const bar = document.getElementById('categoryBar');
+  bar.innerHTML = cats.map(c=>`<button class="chip ${c===selectedCategory?'active':''}" onclick="selectCategory('${c}')">${c}</button>`).join('');
+}
+function selectCategory(c){
+  selectedCategory = c;
+  renderCategories();
+  renderProducts();
+}
+function applySearch(){
+  searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+  renderProducts();
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('searchInput').addEventListener('keyup', e=>{
+    if(e.key === 'Enter') applySearch();
+  });
+});
+
+/* ---------- Render productos ---------- */
+function renderProducts(){
+  let list = products.filter(p=>{
+    const matchCat = selectedCategory === "Todos" || p.cat === selectedCategory;
+    const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm) || p.cat.toLowerCase().includes(searchTerm) || p.pet.toLowerCase().includes(searchTerm);
+    return matchCat && matchSearch;
+  });
+  document.getElementById('resultsTitle').textContent = searchTerm ? `Resultados para "${searchTerm}" (${list.length})` : (selectedCategory === "Todos" ? "Todos los productos" : selectedCategory);
+  const grid = document.getElementById('productGrid');
+  if(list.length === 0){
+    grid.innerHTML = `<div class="empty-cart" style="grid-column:1/-1"><span class="em">🔍</span>No encontramos productos. Prueba otra búsqueda.</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(p=>`
+    <div class="product-card">
+      <div class="product-img">${p.emoji}</div>
+      <div class="product-body">
+        <div class="product-tag">${p.cat} · ${p.pet}</div>
+        <h3 class="product-name">${p.name}</h3>
+        <div class="stars">${'★'.repeat(Math.round(p.rating))}${'☆'.repeat(5-Math.round(p.rating))} <span style="color:var(--muted)">(${p.rating})</span></div>
+        <p class="product-desc">${p.desc}</p>
+        ${p.stock <= 5 ? `<div class="stock-low">⚠️ Solo quedan ${p.stock} unidades</div>` : ''}
+        <div class="price-row">
+          <div><span class="price">$${p.price.toFixed(2)}</span>${p.oldPrice ? `<span class="old-price">$${p.oldPrice.toFixed(2)}</span>` : ''}</div>
+        </div>
+        <button class="add-btn" id="btn-${p.id}" onclick="addToCart(${p.id})">Añadir al carrito 🛒</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ---------- Carrito ---------- */
+function addToCart(id){
+  const product = products.find(p=>p.id===id);
+  const item = cart.find(i=>i.id===id);
+  if(item){ item.qty++; } else { cart.push({...product, qty:1}); }
+  updateCartUI();
+  const btn = document.getElementById('btn-'+id);
+  btn.textContent = "✓ Añadido";
+  btn.classList.add('added');
+  setTimeout(()=>{ btn.textContent = "Añadir al carrito 🛒"; btn.classList.remove('added'); }, 1200);
+  showToast(`${product.name} añadido al carrito`);
+}
+function changeQty(id, delta){
+  const item = cart.find(i=>i.id===id);
+  if(!item) return;
+  item.qty += delta;
+  if(item.qty <= 0) cart = cart.filter(i=>i.id!==id);
+  updateCartUI();
+}
+function removeItem(id){
+  cart = cart.filter(i=>i.id!==id);
+  updateCartUI();
+}
+function cartCount(){ return cart.reduce((s,i)=>s+i.qty,0); }
+function cartSubtotal(){ return cart.reduce((s,i)=>s+i.qty*i.price,0); }
+
+function updateCartUI(){
+  document.getElementById('cartBadge').textContent = cartCount();
+  const body = document.getElementById('cartBody');
+  const footer = document.getElementById('cartFooter');
+  if(cart.length === 0){
+    body.innerHTML = `<div class="empty-cart"><span class="em">🛒</span>Tu carrito está vacío.<br>¡Agrega productos para tu mascota!</div>`;
+    footer.innerHTML = '';
+    return;
+  }
+  body.innerHTML = cart.map(i=>`
+    <div class="cart-item">
+      <div class="cart-item-img">${i.emoji}</div>
+      <div class="cart-item-info">
+        <p class="cart-item-name">${i.name}</p>
+        <div class="cart-item-price">$${(i.price*i.qty).toFixed(2)}</div>
+        <div class="qty-controls">
+          <button onclick="changeQty(${i.id},-1)">−</button>
+          <span>${i.qty}</span>
+          <button onclick="changeQty(${i.id},1)">+</button>
+        </div>
+        <button class="remove-link" onclick="removeItem(${i.id})">Eliminar</button>
+      </div>
+    </div>
+  `).join('');
+  const subtotal = cartSubtotal();
+  const shipping = subtotal >= 50 || subtotal===0 ? 0 : 4.99;
+  const tax = subtotal * 0.08;
+  const total = subtotal + shipping + tax;
+  footer.innerHTML = `
+    <div class="summary-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+    <div class="summary-row"><span>Envío</span><span>${shipping===0?'Gratis 🎉':'$'+shipping.toFixed(2)}</span></div>
+    <div class="summary-row"><span>Impuestos (8%)</span><span>$${tax.toFixed(2)}</span></div>
+    <div class="summary-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+    <button class="checkout-btn" onclick="startCheckout()">Proceder al pago →</button>
+  `;
+}
+
+function openCart(){
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('cartDrawer').classList.add('show');
+}
+function closeCart(){
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('cartDrawer').classList.remove('show');
+}
+
+/* ---------- Toast ---------- */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ---------- Checkout flow ---------- */
+function startCheckout(){
+  if(cart.length === 0) return;
+  closeCart();
+  checkoutStep = 1;
+  selectedPayment = null;
+  orderData = {};
+  document.getElementById('checkoutOverlay').classList.add('show');
+  renderCheckoutStep();
+}
+function closeCheckout(){
+  document.getElementById('checkoutOverlay').classList.remove('show');
+}
+
+function stepsHTML(){
+  const labels = ["Envío","Pago","Revisar","Listo"];
+  return `<div class="steps">${labels.map((l,idx)=>{
+    const n = idx+1;
+    const cls = n < checkoutStep ? 'done' : (n===checkoutStep ? 'active' : '');
+    return `<div class="step ${cls}"><div class="step-circle">${n < checkoutStep ? '✓' : n}</div><div class="step-label">${l}</div></div>`;
+  }).join('')}</div>`;
+}
+
+function renderCheckoutStep(){
+  const body = document.getElementById('modalBody');
+  const title = document.getElementById('modalTitle');
+  if(checkoutStep === 1){
+    title.textContent = "Datos de envío";
+    body.innerHTML = stepsHTML() + `
+      <div class="form-group" id="fg-name">
+        <label>Nombre completo</label>
+        <input type="text" id="in-name" value="${orderData.name||''}" placeholder="Ej. Juan Pérez">
+        <div class="error-text">Ingresa tu nombre completo.</div>
+      </div>
+      <div class="form-group" id="fg-email">
+        <label>Correo electrónico</label>
+        <input type="email" id="in-email" value="${orderData.email||''}" placeholder="tucorreo@ejemplo.com">
+        <div class="error-text">Ingresa un correo válido.</div>
+      </div>
+      <div class="form-group" id="fg-address">
+        <label>Dirección de envío</label>
+        <input type="text" id="in-address" value="${orderData.address||''}" placeholder="Calle, número, ciudad">
+        <div class="error-text">Ingresa una dirección válida.</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" id="fg-city">
+          <label>Ciudad</label>
+          <input type="text" id="in-city" value="${orderData.city||''}" placeholder="Ciudad">
+          <div class="error-text">Requerido.</div>
+        </div>
+        <div class="form-group" id="fg-zip">
+          <label>Código postal</label>
+          <input type="text" id="in-zip" value="${orderData.zip||''}" placeholder="00000">
+          <div class="error-text">Requerido.</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeCheckout()">Cancelar</button>
+        <button class="btn btn-primary" onclick="validateShipping()">Continuar →</button>
+      </div>
+    `;
+  } else if(checkoutStep === 2){
+    title.textContent = "Método de pago";
+    body.innerHTML = stepsHTML() + `
+      <div class="pay-methods">
+        <div class="pay-method ${selectedPayment==='card'?'selected':''}" onclick="choosePayment('card')">
+          <span class="pm-icon">💳</span>Tarjeta
+        </div>
+        <div class="pay-method ${selectedPayment==='paypal'?'selected':''}" onclick="choosePayment('paypal')">
+          <span class="pm-icon">🅿️</span>PayPal
+        </div>
+        <div class="pay-method ${selectedPayment==='cash'?'selected':''}" onclick="choosePayment('cash')">
+          <span class="pm-icon">💵</span>Contraentrega
+        </div>
+      </div>
+      <div id="paymentDetails"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="checkoutStep=1;renderCheckoutStep()">← Atrás</button>
+        <button class="btn btn-primary" onclick="validatePayment()">Continuar →</button>
+      </div>
+    `;
+    renderPaymentDetails();
+  } else if(checkoutStep === 3){
+    title.textContent = "Revisar y confirmar";
+    const subtotal = cartSubtotal();
+    const shipping = subtotal >= 50 ? 0 : 4.99;
+    const tax = subtotal * 0.08;
+    const total = subtotal + shipping + tax;
+    body.innerHTML = stepsHTML() + `
+      <div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px;">
+        <strong>Enviar a:</strong> ${orderData.name}<br>
+        <span style="color:var(--muted);font-size:.85rem">${orderData.address}, ${orderData.city}, ${orderData.zip}<br>${orderData.email}</span>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:16px;">
+        <strong>Pago:</strong> ${paymentLabel(selectedPayment)}
+      </div>
+      <div style="max-height:180px;overflow-y:auto;margin-bottom:12px;">
+        ${cart.map(i=>`<div class="order-review-item"><span>${i.emoji} ${i.name} x${i.qty}</span><span>$${(i.price*i.qty).toFixed(2)}</span></div>`).join('')}
+      </div>
+      <div class="summary-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+      <div class="summary-row"><span>Envío</span><span>${shipping===0?'Gratis':'$'+shipping.toFixed(2)}</span></div>
+      <div class="summary-row"><span>Impuestos</span><span>$${tax.toFixed(2)}</span></div>
+      <div class="summary-row total"><span>Total a pagar</span><span>$${total.toFixed(2)}</span></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="checkoutStep=2;renderCheckoutStep()">← Atrás</button>
+        <button class="btn btn-primary" onclick="processPayment()">Confirmar y pagar 🔒</button>
+      </div>
+    `;
+  } else if(checkoutStep === 'processing'){
+    title.textContent = "Procesando pago...";
+    body.innerHTML = `
+      <div style="text-align:center;padding:20px 0;">
+        <div class="spinner"></div>
+        <p style="color:var(--muted)">Estamos confirmando tu pago de forma segura, espera un momento...</p>
+      </div>
+    `;
+  } else if(checkoutStep === 4){
+    title.textContent = "¡Compra exitosa!";
+    const orderNum = 'PS-' + Math.floor(100000 + Math.random()*899999);
+    body.innerHTML = stepsHTML() + `
+      <div class="success-view">
+        <div class="success-icon">✓</div>
+        <h3>¡Gracias por tu compra, ${orderData.name.split(' ')[0]}!</h3>
+        <p style="color:var(--muted)">Hemos enviado la confirmación a ${orderData.email}</p>
+        <div class="order-num">Número de orden: ${orderNum}</div>
+        <p style="color:var(--muted);font-size:.85rem">Tu pedido llegará en 24-48 horas a: ${orderData.address}, ${orderData.city}</p>
+        <button class="btn btn-primary" style="margin-top:16px;width:100%" onclick="finishOrder()">Continuar comprando</button>
+      </div>
+    `;
+  }
+}
+
+function paymentLabel(p){
+  return p==='card' ? '💳 Tarjeta terminada en ' + (orderData.cardLast4||'****') :
+         p==='paypal' ? '🅿️ PayPal (' + (orderData.paypalEmail||'') + ')' :
+         '💵 Pago contraentrega';
+}
+
+function choosePayment(p){
+  selectedPayment = p;
+  renderCheckoutStep();
+}
+
+function renderPaymentDetails(){
+  const el = document.getElementById('paymentDetails');
+  if(!el) return;
+  if(selectedPayment === 'card'){
+    el.innerHTML = `
+      <div class="form-group" id="fg-cardname">
+        <label>Nombre en la tarjeta</label>
+        <input type="text" id="in-cardname" value="${orderData.cardName||''}" placeholder="Como aparece en la tarjeta">
+        <div class="error-text">Requerido.</div>
+      </div>
+      <div class="form-group" id="fg-cardnum">
+        <label>Número de tarjeta</label>
+        <input type="text" id="in-cardnum" maxlength="19" value="${orderData.cardNum||''}" placeholder="1234 5678 9012 3456">
+        <div class="error-text">Ingresa un número de tarjeta válido (16 dígitos).</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" id="fg-cardexp">
+          <label>Vencimiento</label>
+          <input type="text" id="in-cardexp" maxlength="5" value="${orderData.cardExp||''}" placeholder="MM/AA">
+          <div class="error-text">Formato MM/AA.</div>
+        </div>
+        <div class="form-group" id="fg-cardcvv">
+          <label>CVV</label>
+          <input type="text" id="in-cardcvv" maxlength="4" value="${orderData.cardCvv||''}" placeholder="123">
+          <div class="error-text">3-4 dígitos.</div>
+        </div>
+      </div>
+      <p style="font-size:.75rem;color:var(--muted)">🔒 Esto es una simulación educativa. No se procesan pagos reales ni se almacenan datos.</p>
+    `;
+  } else if(selectedPayment === 'paypal'){
+    el.innerHTML = `
+      <div class="form-group" id="fg-paypal">
+        <label>Correo de PayPal</label>
+        <input type="email" id="in-paypal" value="${orderData.paypalEmail||''}" placeholder="tucorreo@ejemplo.com">
+        <div class="error-text">Ingresa un correo válido.</div>
+      </div>
+      <p style="font-size:.75rem;color:var(--muted)">Serás redirigido (simulado) a PayPal para confirmar tu pago.</p>
+    `;
+  } else if(selectedPayment === 'cash'){
+    el.innerHTML = `<p style="font-size:.85rem;color:var(--muted)">Pagarás en efectivo al momento de recibir tu pedido. Ten el monto exacto disponible.</p>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+/* ---------- Validaciones ---------- */
+function setFieldError(id, isError){
+  const fg = document.getElementById(id);
+  if(!fg) return;
+  fg.classList.toggle('error', isError);
+}
+
+function validateShipping(){
+  const name = document.getElementById('in-name').value.trim();
+  const email = document.getElementById('in-email').value.trim();
+  const address = document.getElementById('in-address').value.trim();
+  const city = document.getElementById('in-city').value.trim();
+  const zip = document.getElementById('in-zip').value.trim();
+
+  let valid = true;
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  setFieldError('fg-name', name.length < 3); if(name.length<3) valid=false;
+  setFieldError('fg-email', !emailOk); if(!emailOk) valid=false;
+  setFieldError('fg-address', address.length < 5); if(address.length<5) valid=false;
+  setFieldError('fg-city', city.length < 2); if(city.length<2) valid=false;
+  setFieldError('fg-zip', zip.length < 3); if(zip.length<3) valid=false;
+
+  if(!valid) return;
+  orderData = {...orderData, name, email, address, city, zip};
+  checkoutStep = 2;
+  renderCheckoutStep();
+}
+
+function validatePayment(){
+  if(!selectedPayment){
+    showToast('Selecciona un método de pago');
+    return;
+  }
+  let valid = true;
+  if(selectedPayment === 'card'){
+    const cardName = document.getElementById('in-cardname').value.trim();
+    const cardNum = document.getElementById('in-cardnum').value.replace(/\s/g,'');
+    const cardExp = document.getElementById('in-cardexp').value.trim();
+    const cardCvv = document.getElementById('in-cardcvv').value.trim();
+
+    setFieldError('fg-cardname', cardName.length < 3); if(cardName.length<3) valid=false;
+    const numOk = /^\d{16}$/.test(cardNum);
+    setFieldError('fg-cardnum', !numOk); if(!numOk) valid=false;
+    const expOk = /^(0[1-9]|1[0-2])\/\d{2}$/.test(cardExp);
+    setFieldError('fg-cardexp', !expOk); if(!expOk) valid=false;
+    const cvvOk = /^\d{3,4}$/.test(cardCvv);
+    setFieldError('fg-cardcvv', !cvvOk); if(!cvvOk) valid=false;
+
+    if(!valid) return;
+    orderData = {...orderData, cardName, cardNum, cardExp, cardCvv, cardLast4: cardNum.slice(-4)};
+  } else if(selectedPayment === 'paypal'){
+    const paypalEmail = document.getElementById('in-paypal').value.trim();
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paypalEmail);
+    setFieldError('fg-paypal', !emailOk); if(!emailOk) valid=false;
+    if(!valid) return;
+    orderData = {...orderData, paypalEmail};
+  }
+  checkoutStep = 3;
+  renderCheckoutStep();
+}
+
+function processPayment(){
+  checkoutStep = 'processing';
+  renderCheckoutStep();
+  setTimeout(()=>{
+    checkoutStep = 4;
+    renderCheckoutStep();
+  }, 1800);
+}
+
+function finishOrder(){
+  cart = [];
+  updateCartUI();
+  closeCheckout();
+  showToast('¡Pedido realizado con éxito! 🎉');
+}
+
+/* ---------- Init ---------- */
+renderCategories();
+renderProducts();
+updateCartUI();
+</script>
+</body>
+</html>
